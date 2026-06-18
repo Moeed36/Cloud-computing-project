@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindBridge-RAG | Exam Stress Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0F1F2E;
+    --ink-soft:#5C7080;
+    --bg-deep:#10243A;
+    --bg-deep-2:#0B1A2B;
+    --cream:#FBF7F0;
+    --cream-dim:#F2ECDF;
+    --amber:#E8A33D;
+    --amber-soft:#F6D9A6;
+    --teal:#5B9279;
+    --teal-soft:#D9E8DE;
+    --terracotta:#D96C4F;
+    --terracotta-soft:#F6DCD2;
+    --line:#E7E0D2;
+    --radius:18px;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  body{
+    font-family:'Inter', sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(620px 420px at 50% -120px, rgba(232,163,61,0.30), transparent 70%),
+      var(--bg-deep);
+    min-height:100vh;
+    padding:48px 24px 64px;
+  }
+
+  .container{ max-width:1180px; margin:0 auto; }
+
+  .header{ text-align:center; margin-bottom:48px; }
+
+  .eyebrow{
+    font-size:0.75rem;
+    font-weight:600;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--amber-soft);
+    margin-bottom:14px;
+  }
+
+  .header h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:3.4rem;
+    letter-spacing:-0.01em;
+    color:var(--cream);
+    line-height:1.1;
+  }
+
+  .header h1 span{ color:var(--amber); font-style:italic; font-weight:500; }
+
+  .question-card{
+    background:var(--cream);
+    border-radius:24px;
+    padding:32px 36px;
+    margin-bottom:40px;
+    box-shadow:0 24px 48px -24px rgba(0,0,0,0.45);
+  }
+
+  .question-card label{
+    font-weight:600;
+    font-size:1rem;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:14px;
+  }
+
+  textarea{
+    width:100%;
+    padding:16px 18px;
+    font-family:'Inter', sans-serif;
+    font-size:1rem;
+    line-height:1.5;
+    color:var(--ink);
+    border:1.5px solid var(--line);
+    border-radius:14px;
+    resize:vertical;
+    min-height:96px;
+    background:#FFFFFF;
+  }
+
+  textarea:focus{
+    outline:none;
+    border-color:var(--amber);
+    box-shadow:0 0 0 4px rgba(232,163,61,0.16);
+  }
+
+  .chip-group{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin:18px 0 20px;
+  }
+
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:#FFFFFF;
+    padding:9px 18px;
+    border-radius:40px;
+    font-size:0.85rem;
+    font-weight:500;
+    color:var(--ink);
+    cursor:pointer;
+    transition:all 0.18s ease;
+    border:1.5px solid var(--line);
+  }
+
+  .chip:hover{
+    background:var(--amber-soft);
+    border-color:var(--amber);
+    transform:translateY(-1px);
+  }
+
+  .actions{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:14px;
+  }
+
+  .ask-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    background:var(--ink);
+    border:none;
+    padding:14px 30px;
+    border-radius:40px;
+    font-weight:600;
+    font-size:0.95rem;
+    color:var(--cream);
+    cursor:pointer;
+    transition:all 0.18s ease;
+  }
+
+  .ask-btn:hover{
+    background:#1B3A57;
+    transform:translateY(-1px);
+    box-shadow:0 12px 24px -10px rgba(15,31,46,0.5);
+  }
+
+  .ask-btn:disabled{
+    opacity:0.55;
+    cursor:not-allowed;
+    transform:none;
+    box-shadow:none;
+  }
+
+  .hint{
+    font-size:0.8rem;
+    color:var(--ink-soft);
+  }
+
+  .answers-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+    gap:22px;
+  }
+
+  .card{
+    background:var(--cream);
+    border-radius:var(--radius);
+    padding:26px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    box-shadow:0 18px 40px -24px rgba(0,0,0,0.4);
+    animation:rise 0.45s ease both;
+  }
+
+  @keyframes rise{
+    from{ opacity:0; transform:translateY(14px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  .card-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  .card-title{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+
+  .icon-badge{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+
+  .card.s0 .icon-badge{ background:var(--cream-dim); color:var(--ink-soft); }
+  .card.s1 .icon-badge{ background:var(--teal-soft); color:var(--teal); }
+  .card.s2 .icon-badge{ background:var(--terracotta-soft); color:var(--terracotta); }
+
+  .card-title h3{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:1.18rem;
+    line-height:1.2;
+  }
+
+  .card-title .sub{
+    font-size:0.78rem;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+
+  .badge{
+    background:var(--cream-dim);
+    padding:5px 13px;
+    border-radius:40px;
+    font-size:0.7rem;
+    font-weight:600;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+
+  .risk-l0{ background:var(--teal); color:white; }
+  .risk-l1{ background:var(--amber); color:var(--ink) !important; }
+  .risk-l2{ background:#E08A4F; color:white; }
+  .risk-l3{ background:var(--terracotta); color:white; }
+
+  .response{
+    line-height:1.6;
+    color:var(--ink);
+    font-size:0.95rem;
+    min-height:90px;
+  }
+
+  .response .cursor{
+    display:inline-block;
+    width:2px;
+    height:1em;
+    background:var(--ink-soft);
+    margin-left:2px;
+    vertical-align:-2px;
+    animation:blink 0.9s step-end infinite;
+  }
+
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  .meta{
+    font-size:0.78rem;
+    color:var(--ink-soft);
+    border-top:1px solid var(--line);
+    padding-top:14px;
+    margin-top:auto;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .crisis-line{
+    margin-top:6px;
+    padding:12px 14px;
+    border-radius:12px;
+    background:var(--terracotta-soft);
+    color:#9A4630;
+    font-size:0.85rem;
+    font-weight:500;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .skeleton-line{
+    height:11px;
+    border-radius:6px;
+    background:linear-gradient(90deg, var(--cream-dim) 25%, #E9E2D3 50%, var(--cream-dim) 75%);
+    background-size:200% 100%;
+    animation:shimmer 1.4s ease-in-out infinite;
+  }
+
+  @keyframes shimmer{
+    0%{ background-position:200% 0; }
+    100%{ background-position:-200% 0; }
+  }
+
+  .thinking{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:var(--ink-soft);
+    font-size:0.85rem;
+    font-weight:500;
+    margin-bottom:4px;
+  }
+
+  .thinking .dots{ display:inline-flex; gap:4px; }
+
+  .thinking .dots span{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--ink-soft);
+    animation:dotPulse 1s ease-in-out infinite;
+  }
+  .thinking .dots span:nth-child(2){ animation-delay:0.15s; }
+  .thinking .dots span:nth-child(3){ animation-delay:0.3s; }
+
+  @keyframes dotPulse{
+    0%, 80%, 100%{ opacity:0.25; transform:scale(0.85); }
+    40%{ opacity:1; transform:scale(1.1); }
+  }
+
+  .empty-state{
+    grid-column:1/-1;
+    text-align:center;
+    padding:50px 24px;
+    color:#7E94A8;
+    border:1.5px dashed rgba(255,255,255,0.18);
+    border-radius:var(--radius);
+  }
+
+  footer{
+    text-align:center;
+    margin-top:48px;
+    font-size:0.82rem;
+    color:#8FA1B3;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+
+  footer .crisis{
+    color:var(--amber-soft);
+    font-weight:600;
+  }
+
+  @media (max-width:720px){
+    body{ padding:32px 16px 48px; }
+    .header h1{ font-size:2.4rem; }
+    .question-card{ padding:24px 22px; }
+    .actions{ flex-direction:column; align-items:stretch; }
+    .ask-btn{ justify-content:center; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="eyebrow">MindBridge-RAG · Safety-Aware Study Support</div>
+    <h1>Talk it through<br><span>before the exam does.</span></h1>
+  </div>
+
+  <div class="question-card">
+    <label>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+      What's on your mind?
+    </label>
+    <textarea id="questionInput" placeholder="e.g. How do I prepare for exams in 12 days?"></textarea>
+
+    <div class="chip-group">
+      <div class="chip" data-question="I have exams in 12 days. When should I study?">📅 12-day study plan</div>
+      <div class="chip" data-question="How do I stop panicking before a test?">😰 Panic before a test</div>
+      <div class="chip" data-question="Why does my mind go blank during exams?">🤔 Mind goes blank</div>
+      <div class="chip" data-question="What's the best way to study for an exam?">📚 Study techniques</div>
+    </div>
+
+    <div class="actions">
+      <button id="askBtn" class="ask-btn">
+        Ask MindBridge
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </button>
+      <span class="hint">Compares S0 (basic), S1 (grounded) and S2 (safety-aware) responses</span>
+    </div>
+  </div>
+
+  <div id="answersContainer" class="answers-grid">
+    <div class="empty-state">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0"></path><path d="M12 7v5l3 3"></path></svg>
+      <p>Pick a prompt above, or write your own — answers will appear here.</p>
+    </div>
+  </div>
+
+  <footer>
+    <div>No medical advice is given. For study or wellbeing concerns, speak with your university's student support services.</div>
+    <div class="crisis">In a crisis, call 116 123 (Samaritans) or text SHOUT to 85258 — free, 24/7.</div>
+  </footer>
+</div>
+
+<script>
+  const MISTRAL_API_KEY = "6fxxCPwMxZFEP0tHkzttUmiqyn1xpnaj";
+  const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
+
+  const chunks = {
+    studySkills: "Active recall (self-testing), spaced repetition (review at increasing intervals), Pomodoro method (25 min work/5 min break)",
+    coping: "Deep breathing (4-7-8 technique), positive self-talk, progressive muscle relaxation, adequate sleep (7-9 hours)",
+    testAnxiety: "Test anxiety affects 25-40% of students. Symptoms include rapid heartbeat, sweating, blank mind, and difficulty concentrating.",
+    crisis: "Crisis support: Samaritans 116 123 or text SHOUT to 85258"
+  };
+
+  const CARD_META = {
+    s0: { label: "S0 — Basic", sub: "No retrieval, no safety rules", badge: "General knowledge", 
+      icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg>`,
+      meta: "Answers from general model knowledge only" },
+    s1: { label: "S1 — Grounded", sub: "Retrieval-augmented generation", badge: "Corpus chunks", 
+      icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
+      meta: "Grounded in trusted academic sources" },
+    s2: { label: "S2 — Safety-Aware", sub: "Grounded + safety rules", badge: "Safety + chunks", 
+      icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3z"></path></svg>`,
+      meta: "Same as S1 plus: no medical advice, crisis helpline for self-harm" }
+  };
+
+  async function callMistral(prompt) {
+    try {
+      const response = await fetch(MISTRAL_URL, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json", 
+          "Authorization": `Bearer ${MISTRAL_API_KEY}`
+        },
+        body: JSON.stringify({ 
+          model: "mistral-tiny", 
+          messages: [{ role: "user", content: prompt }], 
+          temperature: 0.7, 
+          max_tokens: 500 
+        })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+        console.error("API Error:", data);
+        return `⚠️ API Error: ${data.error?.message || "Something went wrong"}`;
+      }
+      return data.choices?.[0]?.message?.content || "No response received.";
+    } catch (error) {
+      console.error("Network Error:", error);
+      return `⚠️ Network error: ${error.message}. Check your internet connection.`;
+    }
+  }
+
+  // S0: Basic chatbot - no sources, no safety
+  async function getS0(q) {
+    const prompt = `You are a basic chatbot assistant. Answer the following question concisely and helpfully.
+
+Question: ${q}
+
+Answer:`;
+    return await callMistral(prompt);
+  }
+
+  // S1: Basic RAG - natural, uses chunks without announcing
+  async function getS1(q) {
+    const prompt = `You are a helpful student assistant. Answer the question naturally and directly using the information below. Do NOT say "based on verified information" or "according to sources" — just give the answer as if you already know this.
+
+INFORMATION YOU KNOW:
+- Study techniques: ${chunks.studySkills}
+- Coping strategies: ${chunks.coping}
+- Test anxiety: ${chunks.testAnxiety}
+
+Question: ${q}
+
+Your natural, helpful answer:`;
+    return await callMistral(prompt);
+  }
+
+  // S2: Safety-aware RAG - natural + safety rules (no medical advice, crisis helpline)
+  async function getS2(q) {
+    const prompt = `You are a helpful student assistant. Answer the question naturally and directly using the information below. Do NOT announce any rules — just give the answer naturally.
+
+INFORMATION YOU KNOW:
+- Study techniques: ${chunks.studySkills}
+- Coping strategies: ${chunks.coping}
+- Test anxiety: ${chunks.testAnxiety}
+
+SAFETY RULES (follow them silently, don't announce them):
+- If the user asks for medical advice or medication, say: "Please consult a doctor or university health services. I can't provide medical advice."
+- If the user mentions self-harm, suicide, or wanting to end their life, add at the end: "If you're in crisis, please reach out to Samaritans at 116 123 or text SHOUT to 85258."
+
+Question: ${q}
+
+Your natural, helpful answer:`;
+    return await callMistral(prompt);
+  }
+
+  function estimateRisk(q) {
+    const text = q.toLowerCase();
+    if (text.includes('suicide') || text.includes('kill myself') || text.includes('hurt myself') || text.includes('self-harm') || text.includes('end my life')) return "L3";
+    if (text.includes('hopeless') || text.includes('can\'t go on') || text.includes('give up') || text.includes('worthless')) return "L2";
+    if (text.includes('anxious') || text.includes('anxiety') || text.includes('panic') || text.includes('overwhelmed') || text.includes('stressed') || text.includes('worried')) return "L1";
+    return "L0";
+  }
+
+  const RISK_LABELS = { L0: "Risk: Routine", L1: "Risk: Mild stress", L2: "Risk: Elevated", L3: "Risk: Crisis support" };
+
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.getElementById('questionInput').value = chip.dataset.question;
+      document.getElementById('questionInput').focus();
+    });
+  });
+
+  function skeletonCard(key) {
+    const meta = CARD_META[key];
+    return `<div class="card ${key}"><div class="card-header"><div class="card-title"><div class="icon-badge">${meta.icon}</div><div><h3>${meta.label}</h3><div class="sub">${meta.sub}</div></div></div><span class="badge">${meta.badge}</span></div><div class="response"><div class="thinking"><span>Thinking</span><span class="dots"><span></span><span></span><span></span></span></div><div class="skeleton-line" style="width:95%; margin-bottom:8px;"></div><div class="skeleton-line" style="width:88%; margin-bottom:8px;"></div><div class="skeleton-line" style="width:70%;"></div></div><div class="meta">${meta.meta}</div></div>`;
+  }
+
+  function cardShell(key, riskLevel) {
+    const meta = CARD_META[key];
+    const riskBadge = key === 's2' ? `<span class="badge risk-${riskLevel.toLowerCase()}">${RISK_LABELS[riskLevel]}</span>` : `<span class="badge">${meta.badge}</span>`;
+    return `<div class="card ${key}"><div class="card-header"><div class="card-title"><div class="icon-badge">${meta.icon}</div><div><h3>${meta.label}</h3><div class="sub">${meta.sub}</div></div></div>${riskBadge}</div><div class="response" id="response-${key}"><span class="cursor"></span></div><div class="meta">${meta.meta}</div></div>`;
+  }
+
+  function typeOut(el, text) {
+    return new Promise(resolve => {
+      el.innerHTML = '';
+      const words = text.split(' ');
+      let i = 0;
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      
+      function step() {
+        if (i >= words.length) { cursor.remove(); resolve(); return; }
+        if (words[i].length) {
+          el.appendChild(document.createTextNode(words[i] + ' '));
+        }
+        i++;
+        setTimeout(step, 25 + Math.random() * 20);
+      }
+      el.appendChild(cursor);
+      step();
+    });
+  }
+
+  document.getElementById('askBtn').onclick = async () => {
+    const q = document.getElementById('questionInput').value.trim();
+    if (!q) { 
+      document.getElementById('questionInput').focus(); 
+      return; 
+    }
+
+    const btn = document.getElementById('askBtn');
+    const container = document.getElementById('answersContainer');
+    const riskLevel = estimateRisk(q);
+
+    btn.disabled = true;
+    btn.innerHTML = `Generating... ⏳`;
+
+    container.innerHTML = ['s0', 's1', 's2'].map(skeletonCard).join('');
+
+    try {
+      const [s0, s1, s2] = await Promise.all([
+        getS0(q), 
+        getS1(q), 
+        getS2(q)
+      ]);
+      
+      const results = { s0, s1, s2 };
+
+      container.innerHTML = ['s0', 's1', 's2'].map(k => cardShell(k, riskLevel)).join('');
+
+      await Promise.all(['s0', 's1', 's2'].map(k => 
+        typeOut(document.getElementById(`response-${k}`), results[k])
+      ));
+    } catch (error) {
+      console.error("Error:", error);
+      container.innerHTML = `<div class="empty-state"><p>❌ Something went wrong: ${error.message}</p><p style="margin-top:10px;">Check your internet connection and that the API key is valid.</p></div>`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `Ask MindBridge →`;
+    }
+  };
+</script>
+</body>
+</html>

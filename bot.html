@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindBridge-RAG | Exam Stress Companion</title>
+    <style>
+        *{ margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(145deg, #f5f7ff 0%, #e9eefa 100%);
+            min-height: 100vh;
+            padding: 32px 24px;
+        }
+        .container { max-width: 1180px; margin: 0 auto; }
+        .header h1 { font-size: 2.8rem; font-weight: 700; text-align: center; }
+        .question-card {
+            background: white;
+            border-radius: 32px;
+            padding: 28px 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.05);
+        }
+        textarea {
+            width: 100%;
+            padding: 16px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 24px;
+            font-size: 1rem;
+            min-height: 100px;
+        }
+        button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .answers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 22px;
+        }
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 24px;
+            border-top: 5px solid;
+        }
+        .card.s0 { border-top-color: #3b82f6; }
+        .card.s1 { border-top-color: #10b981; }
+        .card.s2 { border-top-color: #ef4444; }
+        .response { line-height: 1.6; margin: 15px 0; }
+        .badge {
+            background: #f1f5f9;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🧠 MindBridge‑RAG</h1>
+    </div>
+    <div class="question-card">
+        <textarea id="questionInput" placeholder="Ask a question about exam stress..."></textarea>
+        <button id="askBtn">Ask MindBridge</button>
+    </div>
+    <div id="answersContainer" class="answers-grid"></div>
+</div>
+
+<script>
+    const MISTRAL_API_KEY = "6fxxCPwMxZFEP0tHkzttUmiqyn1xpnaj";
+    const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
+
+    const chunks = {
+        studySkills: "Active recall (self-testing), spaced repetition, Pomodoro method (25 min work/5 min break)",
+        coping: "Deep breathing, positive self-talk, adequate sleep (7-9 hours)",
+        testAnxiety: "Test anxiety affects 25-40% of students. Symptoms include rapid heartbeat, sweating, blank mind."
+    };
+
+    async function callMistral(prompt) {
+        try {
+            const response = await fetch(MISTRAL_URL, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "Authorization": `Bearer ${MISTRAL_API_KEY}`
+                },
+                body: JSON.stringify({ 
+                    model: "mistral-tiny", 
+                    messages: [{ role: "user", content: prompt }], 
+                    temperature: 0.7, 
+                    max_tokens: 500 
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) return `Error: ${data.error?.message}`;
+            return data.choices?.[0]?.message?.content || "No response.";
+        } catch (error) {
+            return `Network error: ${error.message}`;
+        }
+    }
+
+    async function getS0(q) {
+        return await callMistral(`Answer concisely: ${q}`);
+    }
+
+    async function getS1(q) {
+        return await callMistral(`Answer using this info: ${chunks.studySkills} ${chunks.coping} ${chunks.testAnxiety} Question: ${q}`);
+    }
+
+    async function getS2(q) {
+        return await callMistral(`Answer using this info: ${chunks.studySkills} ${chunks.coping} ${chunks.testAnxiety} 
+        Rules: No medical advice. If self-harm/suicide, add "Crisis helpline: 116 123 or text SHOUT to 85258". 
+        Question: ${q}`);
+    }
+
+    document.getElementById('askBtn').onclick = async () => {
+        const q = document.getElementById('questionInput').value.trim();
+        if (!q) return;
+        const container = document.getElementById('answersContainer');
+        container.innerHTML = '<div>Loading...</div>';
+        try {
+            const [s0, s1, s2] = await Promise.all([getS0(q), getS1(q), getS2(q)]);
+            container.innerHTML = `
+                <div class="card s0"><h3>S0 — Basic</h3><div class="response">${s0}</div><span class="badge">No RAG</span></div>
+                <div class="card s1"><h3>S1 — RAG</h3><div class="response">${s1}</div><span class="badge">With chunks</span></div>
+                <div class="card s2"><h3>S2 — Safety RAG</h3><div class="response">${s2}</div><span class="badge">Safety + chunks</span></div>
+            `;
+        } catch (err) {
+            container.innerHTML = `<div>Error: ${err.message}</div>`;
+        }
+    };
+</script>
+</body>
+</html>
